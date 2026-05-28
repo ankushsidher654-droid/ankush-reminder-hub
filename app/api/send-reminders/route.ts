@@ -1,92 +1,98 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
+import { NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 
-export const dynamic = 'force-dynamic';
+export async function GET() {
+  try {
+    const today = new Date().toISOString().split("T")[0];
 
-function torontoToday() {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Toronto',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-}
+    const remindersResponse = await fetch(
+      "https://xhxulrgygduvuimtwoaj.supabase.co/rest/v1/reminders?reminder_date=eq." +
+        today,
+      {
+        headers: {
+          apikey:
+            "sb_publishable_jtqsCqZri1Moh_NYNnWO1A_HyGhUSD9",
+          Authorization:
+            "Bearer sb_publishable_jtqsCqZri1Moh_NYNnWO1A_HyGhUSD9",
+        },
+      }
+    );
 
-export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+    const reminders = await remindersResponse.json();
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    // Vercel cron may call without this header unless you configure it manually.
-    // For manual testing, use the /api/send-reminders-test route or remove CRON_SECRET.
-  }
+    const settingsResponse = await fetch(
+      "https://xhxulrgygduvuimtwoaj.supabase.co/rest/v1/settings?select=*",
+      {
+        headers: {
+          apikey:
+            "sb_publishable_jtqsCqZri1Moh_NYNnWO1A_HyGhUSD9",
+          Authorization:
+            "Bearer sb_publishable_jtqsCqZri1Moh_NYNnWO1A_HyGhUSD9",
+        },
+      }
+    );
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-  const resendKey = process.env.RESEND_API_KEY;
-  const from = process.env.REMINDER_FROM || 'Reminder Hub <onboarding@resend.dev>';
+    const settings = await settingsResponse.json();
 
-  if (!supabaseUrl || !supabaseKey) {
-    return NextResponse.json({ error: 'Missing Supabase environment variables' }, { status: 500 });
-  }
+    if (!settings.length) {
+      return NextResponse.json({
+        error: "No email settings found",
+      });
+    }
 
-  if (!resendKey) {
-    return NextResponse.json({ error: 'Missing RESEND_API_KEY. Website works, but emails are not enabled yet.' }, { status: 500 });
-  }
+    const emails = [
+      settings[0].reminder_email_1,
+      settings[0].reminder_email_2,
+    ].filter(Boolean);
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
-  const resend = new Resend(resendKey);
-  const today = torontoToday();
+    if (!reminders.length) {
+      return NextResponse.json({
+        ok: true,
+        message: `No reminders due on ${today}`,
+      });
+    }
 
-  const { data: settings, error: settingsError } = await supabase
-    .from('settings')
-    .select('*')
-    .limit(1)
-    .single();
+    let html = `
+      <h1>Reminder Hub — Due Today</h1>
+      <p>You have ${reminders.length} reminder(s) due today.</p>
+    `;
 
-  if (settingsError) {
-    return NextResponse.json({ error: settingsError.message }, { status: 500 });
-  }
-
-  const emails = [settings.reminder_email_1, settings.reminder_email_2].filter(Boolean);
-
-  const { data: reminders, error: remindersError } = await supabase
-    .from('reminders')
-    .select('*')
-    .eq('reminder_date', today)
-    .neq('status', 'Done');
-
-  if (remindersError) {
-    return NextResponse.json({ error: remindersError.message }, { status: 500 });
-  }
-
-  if (!reminders || reminders.length === 0) {
-    return NextResponse.json({ ok: true, message: `No reminders due on ${today}` });
-  }
-
-  const html = `
-    <div style="font-family:Arial,sans-serif">
-      <h2>Reminder Hub — Due Today</h2>
-      <p>You have ${reminders.length} reminder(s) due today: <b>${today}</b></p>
-      ${reminders.map((r:any) => `
-        <div style="border:1px solid #ddd;border-radius:12px;padding:12px;margin:12px 0">
-          <h3 style="margin:0 0 8px">${r.title}</h3>
-          <p><b>Time:</b> ${r.reminder_time ? String(r.reminder_time).slice(0,5) : 'Not set'}</p>
-          <p><b>Category:</b> ${r.category || 'Not set'}</p>
-          <p><b>Place:</b> ${r.place || 'Not set'}</p>
-          <p><b>Notes:</b> ${r.notes || ''}</p>
+    reminders.forEach((r) => {
+      html += `
+        <div style="border:1px solid #ccc;padding:15px;margin-bottom:15px;border-radius:10px;">
+          <h2>${r.title}</h2>
+          <p><strong>Time:</strong> ${r.reminder_time || "N/A"}</p>
+          <p><strong>Category:</strong> ${r.category || "N/A"}</p>
+          <p><strong>Place:</strong> ${r.place || "N/A"}</p>
+          <p><strong>Notes:</strong> ${r.notes || ""}</p>
         </div>
-      `).join('')}
-    </div>
-  `;
+      `;
+    });
 
-  const result = await resend.emails.send({
-    from,
-    to: emails,
-    subject: `Reminder Hub: ${reminders.length} reminder(s) due today`,
-    html,
-  });
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
 
-  return NextResponse.json({ ok: true, today, sent_to: emails, reminders: reminders.length, result });
+    const result = await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: emails.join(","),
+      subject: `Reminder Hub: ${reminders.length} due today`,
+      html,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      sent_to: emails,
+      reminders: reminders.length,
+      result,
+    });
+  } catch (error) {
+    return NextResponse.json({
+      error: error.message,
+    });
+  }
 }
