@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maha, sequel plan?</title>
+  <style>
+    :root{
+      --bg1:#180521;
+      --bg2:#4b1039;
+      --bg3:#210913;
+      --card:rgba(255,255,255,0.11);
+      --line:rgba(255,255,255,0.15);
+      --text:#fff8fb;
+      --muted:#f9dce9;
+      --accent:#ff9ccd;
+      --accent2:#ffd9ea;
+      --shadow:0 22px 60px rgba(0,0,0,.32);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;min-height:100%}
+    body{
+      font-family:Inter,Arial,Helvetica,sans-serif;
+      color:var(--text);
+      background:linear-gradient(135deg,var(--bg1),var(--bg2) 60%,var(--bg3));
+      overflow-x:hidden;
+    }
+    .hearts{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+    .heart{position:absolute;bottom:-40px;font-size:18px;opacity:.25;animation:floatUp linear infinite}
+    @keyframes floatUp{
+      0%{transform:translateY(0) rotate(0);opacity:0}
+      10%{opacity:.3}
+      100%{transform:translateY(-110vh) rotate(20deg);opacity:0}
+    }
+    .wrap{max-width:1140px;margin:0 auto;padding:22px 16px 42px}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin-bottom:18px
+    }
+    .pill,.music-btn{
+      background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:999px;
+      padding:12px 16px;font-size:14px;font-weight:800;backdrop-filter:blur(8px);
+      box-shadow:var(--shadow);color:var(--text);text-decoration:none
+    }
+    .layout{display:grid;grid-template-columns:1.12fr .88fr;gap:18px}
+    .card{
+      background:var(--card);border:1px solid var(--line);border-radius:30px;
+      box-shadow:var(--shadow);backdrop-filter:blur(15px)
+    }
+    .main{padding:28px}
+    .side{padding:22px}
+    h1,h2,h3,p{margin:0}
+    h1{font-size:clamp(36px,6vw,60px);line-height:1.02;margin-bottom:12px}
+    h2{font-size:clamp(27px,4.5vw,46px);line-height:1.1;margin-bottom:14px}
+    .lead{font-size:clamp(17px,2.15vw,21px);line-height:1.72;color:#fff2f8}
+    .muted{color:var(--muted)}
+    .section{display:none}
+    .section.active{display:block;animation:fade .35s ease}
+    @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .grid-2,.grid-3{display:grid;gap:12px}
+    .grid-2{grid-template-columns:repeat(2,1fr)}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    .tiny-card,.choice,.note,.fun-note,.preview-box{
+      border:1px solid var(--line);border-radius:22px;padding:14px 15px
+    }
+    .tiny-card{background:rgba(0,0,0,.13);line-height:1.62;color:#fff5fb}
+    .choice{
+      background:rgba(0,0,0,.12);cursor:pointer;transition:.18s transform,.18s background,.18s border
+    }
+    .choice:hover{transform:translateY(-2px);background:rgba(255,255,255,.08)}
+    .choice.selected{border-color:#ffc3df;background:rgba(255,156,205,.18)}
+    .choice-title{font-size:17px;font-weight:900;margin-bottom:4px}
+    .choice-sub{font-size:13px;line-height:1.52;color:#ffe6f1}
+    .tag{
+      display:inline-flex;align-items:center;gap:8px;background:rgba(255,156,205,.13);
+      border:1px solid rgba(255,217,234,.23);padding:10px 14px;border-radius:999px;
+      font-size:14px;font-weight:800
+    }
+    .note{
+      background:rgba(255,156,205,.11);border-style:dashed;line-height:1.72;color:#fff3f9
+    }
+    .fun-note{background:rgba(255,255,255,.06);line-height:1.7}
+    .divider{height:1px;background:var(--line);margin:14px 0}
+    .preview-title{
+      font-size:12px;letter-spacing:.23em;text-transform:uppercase;color:#f8dbe8;margin-bottom:8px
+    }
+    .preview-big{font-size:31px;font-weight:900;margin-bottom:10px}
+    .center{text-align:center}
+    .mini{font-size:13px;line-height:1.62;color:#ffe2ee}
+    .actions{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px
+    }
+    button{
+      border:none;border-radius:16px;padding:14px 18px;font-size:15px;font-weight:900;cursor:pointer;
+      transition:.2s transform,.2s opacity,.2s background,.2s color
+    }
+    button:hover{transform:translateY(-2px)}
+    .btn-primary{background:white;color:#28131f}
+    .btn-ghost{background:rgba(255,255,255,.11);color:white;border:1px solid var(--line)}
+    .btn-pink{background:linear-gradient(180deg,#ffbadc,#ff98ca);color:#28131f}
+    .big-btn{width:100%;padding:16px 18px;border-radius:18px;margin-top:10px}
+    .status{font-size:14px;color:#ffe6f1;margin-top:12px;line-height:1.7}
+    @media (max-width: 860px){
+      .layout{grid-template-columns:1fr}
+      .grid-2,.grid-3{grid-template-columns:1fr}
+      .main,.side{padding:20px}
+      .actions{justify-content:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="pill">Made for Maha with dangerous levels of effort ✨</div>
+      <a href="#" class="music-btn" onclick="playSong(event)">Play our song ♫</a>
+    </div>
+
+    <div class="layout">
+      <div class="card main">
+        <section class="section active" data-page="0">
+          <div class="tag">💌 Tiny surprise for Maha</div>
+          <div style="height:14px"></div>
+          <h1>Hey Maha 💖</h1>
+          <p class="lead">
+            This is not a date proposal page.
+            This is a very carefully crafted sequel invitation page.
+            And yes, I know that sounds suspiciously specific, but please keep reading.
+          </p>
+          <div style="height:18px"></div>
+          <div class="grid-2">
+            <div class="tiny-card">You make normal days feel like events.</div>
+            <div class="tiny-card">You are still unfairly easy to smile for.</div>
+            <div class="tiny-card">You deserve cute effort, not dry boring texts.</div>
+            <div class="tiny-card">And yes, I absolutely overprepared for this on purpose.</div>
+          </div>
+          <div style="height:18px"></div>
+          <div class="note">Before any objections are raised, please notice the effort level here. This is at least premium-quality persuasion.</div>
+        </section>
+
+        <section class="section" data-page="1">
+          <h2>First, quick mood check 😌</h2>
+          <p class="lead">Choose whichever one sounds most like you right now.</p>
+          <div style="height:18px"></div>
+          <div class="grid-3" id="moodChoices">
+            <div class="choice" data-value="Good mood">
+              <div class="choice-title">Good mood 😌</div>
+              <div class="choice-sub">Perfect. Then this page arrived at the correct time.</div>
+            </div>
+            <div class="choice" data-value="Tired mood">
+              <div class="choice-title">Tired mood 😴</div>
+              <div class="choice-sub">Then I am prescribing low pressure and soft vibes.</div>
+            </div>
+            <div class="choice" data-value="Suspicious mood">
+              <div class="choice-title">Suspicious mood 👀</div>
+              <div class="choice-sub">Fair. But keep going. The argument is strong.</div>
+            </div>
+          </div>
+          <div style="height:16px"></div>
+          <div class="note" id="moodNote">No matter the mood, this page still has one job: make Maha smile at least once.</div>
+        </section>
+
+        <section class="section" data-page="2">
+          <h2>Important historical evidence</h2>
+          <div class="grid-2">
+            <div class="tiny-card"><strong>Fact:</strong><br>We watched the first one together.</div>
+            <div class="tiny-card"><strong>Conclusion:</strong><br>Watching the second one together is simply good sequel management.</div>
+            <div class="tiny-card"><strong>Translation:</strong><br>This is not random. This is continuity.</div>
+            <div class="tiny-card"><strong>Official vibe:</strong><br>Two people, one movie, one very valid callback.</div>
+          </div>
+          <div style="height:18px"></div>
+          <div class="fun-note">So no giant label, no awkward title, no unnecessary pressure. Just a very sensible and extremely cute continuation of a story already started.</div>
+        </section>
+
+        <section class="section" data-page="3">
+          <h2>Reasons this should be a safe yes</h2>
+          <div class="grid-2">
+            <div class="tiny-card"><strong>Reason 1:</strong><br>The movie is already chosen: <strong>Dhurandhar 2</strong>. Efficient planning.</div>
+            <div class="tiny-card"><strong>Reason 2:</strong><br>The tone is light, cute, and not weird.</div>
+            <div class="tiny-card"><strong>Reason 3:</strong><br>You still get the final say on timing, because your comfort wins.</div>
+            <div class="tiny-card"><strong>Reason 4:</strong><br>Honestly, rejecting this level of effort would be at least a little rude.</div>
+          </div>
+          <div style="height:18px"></div>
+          <div class="note">This is not me trying to force a label. This is me saying: we watched part one together, so part two deserves equal respect.</div>
+        </section>
+
+        <section class="section" data-page="4">
+          <h2>More evidence, because I came prepared</h2>
+          <div class="grid-2">
+            <div class="tiny-card"><strong>No pressure clause:</strong><br>This is meant to feel easy, not heavy.</div>
+            <div class="tiny-card"><strong>Thoughtful planning clause:</strong><br>I came with proper options, not “we’ll see.”</div>
+            <div class="tiny-card"><strong>Cute factor clause:</strong><br>This page is already doing too much in the best way.</div>
+            <div class="tiny-card"><strong>Maha clause:</strong><br>You are special enough that plain effort was never going to be enough.</div>
+          </div>
+          <div style="height:18px"></div>
+          <div class="fun-note">Basically: not a dramatic date pitch, just a very well-dressed movie plan that happens to care about you a lot.</div>
+        </section>
+
+        <section class="section" data-page="5">
+          <h2>Here’s the sequel plan 🍿</h2>
+          <p class="lead">I picked real options so this feels planned. But you still get the final comfort call, because you are the special part of this whole plan.</p>
+          <div style="height:18px"></div>
+
+          <div class="preview-box">
+            <div class="choice-title">Movie</div>
+            <div class="lead" style="font-size:26px;font-weight:900">Dhurandhar 2</div>
+            <div class="mini">Part one got company. Part two deserves the same respect.</div>
+          </div>
+
+          <div style="height:14px"></div>
+          <div class="grid-3" id="dateChoices">
+            <div class="choice selected" data-value="Friday">
+              <div class="choice-title">Friday</div>
+              <div class="choice-sub">Tomorrow-night magic</div>
+            </div>
+            <div class="choice" data-value="Saturday">
+              <div class="choice-title">Saturday</div>
+              <div class="choice-sub">Peak weekend sequel energy</div>
+            </div>
+            <div class="choice" data-value="Sunday">
+              <div class="choice-title">Sunday</div>
+              <div class="choice-sub">Soft cozy ending to the weekend</div>
+            </div>
+          </div>
+
+          <div style="height:14px"></div>
+          <div class="grid-2" id="timeChoices">
+            <div class="choice" data-value="5:30 PM">
+              <div class="choice-title">5:30 PM</div>
+              <div class="choice-sub">Early evening and civilized</div>
+            </div>
+            <div class="choice selected" data-value="9:25 PM">
+              <div class="choice-title">9:25 PM</div>
+              <div class="choice-sub">Late-night cozy vibe</div>
+            </div>
+          </div>
+
+          <div style="height:18px"></div>
+          <div class="note">Tiny but important detail: this is planned carefully because you matter. But the final comfort call is always yours.</div>
+        </section>
+
+        <section class="section" data-page="6">
+          <h2>Before the final page...</h2>
+          <div class="fun-note">
+            Let the record show that this entire soft and suspiciously charming operation was made by <strong>Kush</strong>.
+          </div>
+          <div style="height:16px"></div>
+          <div class="grid-2">
+            <div class="tiny-card">Not forcing a date label.</div>
+            <div class="tiny-card">Not making it weird.</div>
+            <div class="tiny-card">Just saying two people who watched the first one together...</div>
+            <div class="tiny-card">...should very obviously go watch the second one together too.</div>
+          </div>
+        </section>
+
+        <section class="section center" data-page="7">
+          <div class="tag">💖 Final question</div>
+          <div style="height:14px"></div>
+          <h2>So Maha... what do you say to a very reasonable sequel plan?</h2>
+          <p class="lead">
+            Current plan: <strong>Dhurandhar 2</strong> on <strong id="finalDate">Friday</strong> at <strong id="finalTime">9:25 PM</strong>.
+            Cute, simple, low pressure, and honestly a very strong continuation move.
+          </p>
+          <div style="height:18px"></div>
+          <button class="btn-pink big-btn" onclick="sendAnswer('Okay fine, yes 💖')">Okay fine, yes 💖</button>
+          <button class="btn-ghost big-btn" onclick="sendAnswer('Yes, but I will choose the final time 😌')">Yes, but I will choose the final time 😌</button>
+          <button class="btn-ghost big-btn" onclick="sendAnswer('Yes, because saying no to this page would be rude ✨')">Yes, because saying no to this page would be rude ✨</button>
+          <div class="status" id="statusText">When one of these is clicked, WhatsApp opens with the answer, mood, selected day, and time already written to Kush.</div>
+          <div style="height:14px"></div>
+          <p class="mini">Her ticket will be with her shortly after approval by the very handsome management.</p>
+        </section>
+
+        <div class="actions">
+          <button class="btn-ghost" id="backBtn" onclick="move(-1)">← Back</button>
+          <div class="mini">Extra effort was required. Maha is absolutely not a low-effort person.</div>
+          <button class="btn-primary" id="nextBtn" onclick="move(1)">Next →</button>
+        </div>
+      </div>
+
+      <div class="card side">
+        <div class="preview-title">Special preview</div>
+        <div class="preview-big">The sequel card</div>
+
+        <div class="preview-box">
+          <div class="mini">Chosen plan</div>
+          <div class="divider"></div>
+          <div class="choice-title">Movie</div>
+          <div style="font-size:28px;font-weight:900">Dhurandhar 2</div>
+          <div class="divider"></div>
+          <div class="choice-title">Day</div>
+          <div id="cardDate" class="muted" style="font-size:18px;font-weight:900">Friday</div>
+          <div class="divider"></div>
+          <div class="choice-title">Time</div>
+          <div id="cardTime" class="muted" style="font-size:18px;font-weight:900">9:25 PM</div>
+          <div class="divider"></div>
+          <div class="choice-title">Vibe</div>
+          <div id="cardMood" class="muted" style="font-size:18px;font-weight:900">Undecided 😌</div>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="note">
+          📍 Cinema address<br>
+          <strong>194 McEwan Dr E, Bolton, ON L7E 4E5</strong>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="fun-note">
+          Soft reminder: this page says “no pressure, no big label,” but it still says “I care enough to plan nicely.”
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let page = 0;
+    const sections = [...document.querySelectorAll('.section')];
+    const backBtn = document.getElementById('backBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    let state = {
+      mood: '',
+      date: 'Friday',
+      time: '9:25 PM'
+    };
+
+    function render(){
+      sections.forEach((s, i)=> s.classList.toggle('active', i === page));
+      backBtn.style.visibility = page === 0 ? 'hidden' : 'visible';
+      nextBtn.style.display = page === sections.length - 1 ? 'none' : 'inline-block';
+      document.getElementById('cardDate').textContent = state.date;
+      document.getElementById('cardTime').textContent = state.time;
+      document.getElementById('cardMood').textContent = state.mood || 'Undecided 😌';
+      document.getElementById('finalDate').textContent = state.date;
+      document.getElementById('finalTime').textContent = state.time;
+    }
+
+    function move(dir){
+      page = Math.max(0, Math.min(sections.length - 1, page + dir));
+      render();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function setupChoices(wrapperId, key, noteId){
+      const choices = document.querySelectorAll(`#${wrapperId} .choice`);
+      choices.forEach(choice => {
+        choice.addEventListener('click', () => {
+          choices.forEach(c => c.classList.remove('selected'));
+          choice.classList.add('selected');
+          state[key] = choice.dataset.value;
+          if(noteId){
+            const note = document.getElementById(noteId);
+            const v = choice.dataset.value;
+            if(v === 'Good mood') note.textContent = 'Perfect. Then this page arrived at exactly the correct time.';
+            if(v === 'Tired mood') note.textContent = 'Then the plan has officially been upgraded into low-pressure, soft-vibe mode.';
+            if(v === 'Suspicious mood') note.textContent = 'Very fair. But look at the effort. This is at least premium suspicious.';
+          }
+          render();
+        });
+      });
+    }
+
+    function sendAnswer(answer){
+      const msg = `Hey Kush 💖
+Answer: ${answer}
+Mood chosen: ${state.mood || 'Not selected'}
+Preferred day: ${state.date}
+Preferred time: ${state.time}
+Movie: Dhurandhar 2
+Cinema: 194 McEwan Dr E, Bolton, ON L7E 4E5`;
+      const url = `https://wa.me/14372611531?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+      document.getElementById('statusText').textContent = 'WhatsApp opened with the full answer pre-filled for Kush.';
+    }
+
+    function playSong(e){
+      e.preventDefault();
+      window.open('https://www.youtube.com/results?search_query=Deewana+Navaan+Sandhu', '_blank');
+    }
+
+    setupChoices('moodChoices','mood','moodNote');
+    setupChoices('dateChoices','date');
+    setupChoices('timeChoices','time');
+    render();
+
+    const hearts = document.getElementById('hearts');
+    for(let i=0;i<24;i++){
+      const el = document.createElement('div');
+      el.className = 'heart';
+      el.textContent = ['💖','💕','✨','💘'][i % 4];
+      el.style.left = (Math.random()*100) + 'vw';
+      el.style.animationDuration = (6 + Math.random()*6) + 's';
+      el.style.animationDelay = (Math.random()*6) + 's';
+      el.style.fontSize = (14 + Math.random()*15) + 'px';
+      hearts.appendChild(el);
+    }
+  </script>
+</body>
+</html>
